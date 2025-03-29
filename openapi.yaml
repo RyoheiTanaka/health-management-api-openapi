@@ -1,76 +1,612 @@
 openapi: 3.0.0
 info:
-  title: Health Management API
+  title: 健康管理ウェブアプリ API
   version: v1
-  description: 健康管理に関するAPIです。
+  description: 健康管理ウェブアプリに関するAPIです。
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
 servers:
-  - url: http://localhost:8080/api/v1 # APIのベースURL
+  - url: http://localhost:8000
+  - url: https://health-management-api.coolat.net
+tags:
+  - name: auth
+    description: 認証関連
+  - name: token
+    description: APIトークン関連
+  - name: badge
+    description: Fitbitバッジ関連
+  - name: fat
+    description: Fitbit体脂肪関連
+  - name: sleep
+    description: Fitbit睡眠関連
+  - name: weight
+    description: Fitbit体重関連
+  - name: task
+    description: タスクスケジュール関連
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Sanctum
+      description: Sanctumによる認証
+  schemas:
+    AutoIncrementIdProperties:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+    TimestampProperties:
+      type: object
+      properties:
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: 作成日時 (YYYY-mm-dd HH:mm:ss 形式)
+          example: "2025-03-29 00:00:00"
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: 更新日時 (YYYY-mm-dd HH:mm:ss 形式)
+          example: "2025-03-29 00:00:00"
+        deleted_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: 削除日時 (YYYY-mm-dd HH:mm:ss 形式)
+          example: "2025-03-29 00:00:00"
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          description: ユーザーのメールアドレス
+          example: sample@example.com
+        password:
+          type: string
+          description: ユーザーのパスワード
+          example: password1234
+      required:
+        - email
+        - password
+    LoginSuccessResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            is_login:
+              type: boolean
+              example: true
+              description: ログインが成功したかどうかを示す
+            message:
+              type: string
+              example: ログインしました。
+              description: ログイン後の成功メッセージ
+      required:
+        - data
+    LoginErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: ログインできませんでした。
+          description: ログイン失敗時のエラーメッセージ
+      required:
+        - message
+    LogoutSuccessResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            is_login:
+              type: boolean
+              example: false
+              description: ログアウトが成功したかどうかを示す
+            message:
+              type: string
+              example: ログアウトしました。
+              description: ログアウト後の成功メッセージ
+      required:
+        - data
+    LogoutNotLoggedInResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            is_login:
+              type: boolean
+              example: false
+              description: ユーザーがログインしていなかったことを示す
+            message:
+              type: string
+              example: ログインしていません。
+              description: ユーザーがログインしていなかったことを示すメッセージ
+      required:
+        - data
+    FitbitAuthRedirectResponse:
+      type: string
+      description: Fitbitの認証ページへのリダイレクトURL。
+    FitbitCallbackSuccessResponse:
+      type: string
+      description: Fitbit認証成功後にホームページへリダイレクトします。
+    FitbitCallbackErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: エラーメッセージ。
+        details:
+          type: object
+          nullable: true
+          description: 追加のエラー詳細。
+      required:
+        - error
+    FitbitWeightLog:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/AutoIncrementIdProperties/properties/id'
+            weight:
+              type: string
+              description: 体重
+              example: "70.5"
+            bmi:
+              type: string
+              description: BMI
+              example: "22.38"
+            date:
+              type: string
+              format: date
+              description: 記録日
+            created_at:
+              $ref: '#/components/schemas/TimestampProperties/properties/created_at'
+            updated_at:
+              $ref: '#/components/schemas/TimestampProperties/properties/updated_at'
+            deleted_at:
+              $ref: '#/components/schemas/TimestampProperties/properties/deleted_at'
+    FitbitFatLog:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/AutoIncrementIdProperties/properties/id'
+            fat:
+              type: string
+              description: 体脂肪率
+              example: "19.3"
+            date:
+              type: string
+              format: date
+              description: 記録日
+            created_at:
+              $ref: '#/components/schemas/TimestampProperties/properties/created_at'
+            updated_at:
+              $ref: '#/components/schemas/TimestampProperties/properties/updated_at'
+            deleted_at:
+              $ref: '#/components/schemas/TimestampProperties/properties/deleted_at'
+    FitbitSleepLog:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/AutoIncrementIdProperties/properties/id'
+            duration:
+              type: integer
+              description: 睡眠時間（ミリ秒）
+              example: 19320000
+            efficiency:
+              type: integer
+              description: 睡眠効率（％）
+              example: 93
+            info_code:
+              type: integer
+              description: 睡眠ログの情報コード
+            date_of_sleep:
+              type: string
+              format: date
+              description: 睡眠日
+              example: 2025-03-29
+            end_time:
+              type: string
+              format: date-time
+              description: 睡眠終了時刻
+              example: 2025-03-29 10:00:00
+            created_at:
+              $ref: '#/components/schemas/TimestampProperties/properties/created_at'
+            updated_at:
+              $ref: '#/components/schemas/TimestampProperties/properties/updated_at'
+            deleted_at:
+              $ref: '#/components/schemas/TimestampProperties/properties/deleted_at'
+    FitbitBadgeLog:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/AutoIncrementIdProperties/properties/id'
+            category:
+              type: string
+              description: バッジのカテゴリ
+              example: 現在のまでの合計距離
+            badge_type:
+              type: string
+              description: バッジのタイプ
+              example: LIFETIME_DISTANCE
+            name:
+              type: string
+              description: バッジの名前
+              example: マラソン (42ライフタイムキロ)
+            short_name:
+              type: string
+              description: バッジの短い名前
+              example: マラソン
+            description:
+              type: string
+              description: バッジの説明
+              example: 42ライフタイムキロ
+            image300px:
+              type: string
+              format: url
+              description: 300pxのバッジ画像URL
+              example: https://example.com/fitbit/badge/images/badges_new/300px/example.png
+            image125px:
+              type: string
+              format: url
+              description: 125pxのバッジ画像URL
+              example: https://example.com/fitbit/badge/images/badges_new/125px/example.png
+            date_time:
+              type: string
+              format: date-time
+              description: バッジ獲得日時 (YYYY-mm-dd HH:mm:ss 形式)
+              example: 2015-05-17 00:00:00
+            times_achieved:
+              type: integer
+              description: バッジの獲得回数
+            created_at:
+              $ref: '#/components/schemas/TimestampProperties/properties/created_at'
+            updated_at:
+              $ref: '#/components/schemas/TimestampProperties/properties/updated_at'
+            deleted_at:
+              $ref: '#/components/schemas/TimestampProperties/properties/deleted_at'
+    AuthCheckResponse:
+      type: object
+      properties:
+        authenticated:
+          type: boolean
+          example: true
 paths:
-  /users:
+  /sanctum/csrf-cookie:
     get:
-      summary: ユーザーの一覧を取得します。
+      tags:
+        - auth
+      summary: SanctumのCSRF Cookieを取得
+      description: フロントエンドが認証されたリクエストを行うために必要なCSRF Cookieを設定します。
       responses:
-        "200":
-          description: 成功
+        204:
+          description: CSRF Cookieが正常に設定されました。レスポンスボディは空です。
+  /login:
+    post:
+      tags:
+        - auth
+      summary: 既存のユーザーをログイン
+      description: ユーザーをメールアドレスとパスワードで認証します。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        200:
+          description: ログインに成功しました。
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: integer
-                      format: int64
-                    name:
-                      type: string
-                    email:
-                      type: string
-                      format: email
+                $ref: '#/components/schemas/LoginSuccessResponse'
+        401:
+          description: 認証に失敗しました。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginErrorResponse'
+  /logout:
     post:
-      summary: 新しいユーザーを作成します。
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                email:
-                  type: string
-                  format: email
+      tags:
+        - auth
+      summary: 現在認証されているユーザーをログアウト
+      description: 現在のユーザーのセッションを無効にします。
       responses:
-        "201":
-          description: 作成成功
-        "400":
-          description: 無効なリクエスト
-  /health-data:
-    post:
-      summary: 健康データを登録します。
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                userId:
-                  type: integer
-                  format: int64
-                timestamp:
-                  type: string
-                  format: date-time
-                heartRate:
-                  type: integer
-                steps:
-                  type: integer
+        200:
+          description: ログアウトの結果を返す
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/LogoutSuccessResponse'
+                  - $ref: '#/components/schemas/LogoutNotLoggedInResponse'
+  /fitbit/auth:
+    get:
+      tags:
+        - token
+      summary: ユーザーをFitbitにリダイレクトして認証実行
+      description: Fitbit OAuth 2.0認証フローを開始し、ユーザーをFitbit認証ページにリダイレクトします。
+      security:
+        - bearerAuth: []
       responses:
-        "201":
-          description: 登録成功
-        "400":
-          description: 無効なリクエスト
+        302:
+          description: Fitbit認証URLへのリダイレクト。
+          headers:
+            Location:
+              schema:
+                type: string
+                format: url
+                description: Fitbit認証ページのURL。
+        401:
+          description: 未認証 (Sanctum認証が必要です)。
+  /fitbit/callback:
+    get:
+      tags:
+        - token
+      summary: Fitbit認証後のコールバックを処理
+      description: Fitbitから受信した認証コードを処理し、アクセストークンとリフレッシュトークンと交換して保存します。
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: code
+          schema:
+            type: string
+          required: true
+          description: Fitbitから受信した認証コード。
+      responses:
+        302:
+          description: 認証成功時にホームページへリダイレクトします。
+          headers:
+            Location:
+              schema:
+                type: string
+                format: url
+                description: ホームページのURL。
+        400:
+          description: コールバック処理中のエラー。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FitbitCallbackErrorResponse'
+        401:
+          description: 未認証 (Sanctum認証が必要です)。
+  /backend/auth/check:
+    get:
+      tags:
+        - auth
+      summary: 認証状態を確認
+      description: 現在のユーザーが認証されているかどうかを確認します。
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: 認証済み。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthCheckResponse'
+        401:
+          description: 未認証。
+  /backend/fitbit/weights:
+    get:
+      tags:
+        - weight
+      summary: Fitbitの体重ログ一覧を取得
+      description: 認証されたユーザーのFitbit体重ログの一覧を取得します。
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: is_dashboard
+          schema:
+            type: boolean
+          description: ダッシュボード表示用の最近のデータのみを取得するかどうか（オプション）。
+      responses:
+        200:
+          description: 成功。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FitbitWeightLog'
+        401:
+          description: 未認証。
+  /backend/fitbit/weights/{fitbitWeightLogId}:
+    get:
+      tags:
+        - weight
+      summary: 特定のFitbit体重ログを取得
+      description: 指定されたIDのFitbit体重ログを取得します。
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: fitbitWeightLogId
+          schema:
+            type: integer
+            format: int64
+          required: true
+          description: 取得するFitbit体重ログのID。
+      responses:
+        200:
+          description: 成功。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FitbitWeightLog'
+        401:
+          description: 未認証。
+        404:
+          description: 指定されたIDの体重ログが見つかりません。
+  /backend/fitbit/fats:
+    get:
+      tags:
+        - fat
+      summary: Fitbitの体脂肪率ログ一覧を取得
+      description: 認証されたユーザーのFitbit体脂肪率ログの一覧を取得します。
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: 成功。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FitbitFatLog'
+        401:
+          description: 未認証。
+  /backend/fitbit/fats/{fitbitFatLogId}:
+    get:
+      tags:
+        - fat
+      summary: 特定のFitbit体脂肪率ログを取得
+      description: 指定されたIDのFitbit体脂肪率ログを取得します。
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: fitbitFatLogId
+          schema:
+            type: integer
+            format: int64
+          required: true
+          description: 取得するFitbit体脂肪率ログのID。
+      responses:
+        200:
+          description: 成功。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FitbitFatLog'
+        401:
+          description: 未認証。
+        404:
+          description: 指定されたIDの体脂肪率ログが見つかりません。
+  /backend/fitbit/sleeps:
+    get:
+      tags:
+        - sleep
+      summary: Fitbitの睡眠ログ一覧を取得
+      description: 認証されたユーザーのFitbit睡眠ログの一覧を取得します。
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: 成功。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FitbitSleepLog'
+        401:
+          description: 未認証。
+  /backend/fitbit/sleeps/{fitbitSleepLogId}:
+    get:
+      tags:
+        - sleep
+      summary: 特定のFitbit睡眠ログを取得
+      description: 指定されたIDのFitbit睡眠ログを取得します。
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: fitbitSleepLogId
+          schema:
+            type: integer
+            format: int64
+          required: true
+          description: 取得するFitbit睡眠ログのID。
+      responses:
+        200:
+          description: 成功。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FitbitSleepLog'
+        401:
+          description: 未認証。
+        404:
+          description: 指定されたIDの睡眠ログが見つかりません。
+  /backend/fitbit/badges:
+    get:
+      tags:
+        - badge
+      summary: Fitbitのバッジログ一覧を取得
+      description: 認証されたユーザーのFitbitバッジログの一覧を取得します。
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: 成功。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FitbitBadgeLog'
+        401:
+          description: 未認証。
+  /backend/fitbit/badges/{fitbitBadgeLogId}:
+    get:
+      tags:
+        - badge
+      summary: 特定のFitbitバッジログを取得
+      description: 指定されたIDのFitbitバッジログを取得します。
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: fitbitBadgeLogId
+          schema:
+            type: integer
+            format: int64
+          required: true
+          description: 取得するFitbitバッジログのID。
+      responses:
+        200:
+          description: 成功。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FitbitBadgeLog'
+        401:
+          description: 未認証。
+        404:
+          description: 指定されたIDのバッジログが見つかりません。
+  /backend/schedule-run:
+    get:
+      tags:
+        - task
+      summary: スケジュールされたタスクを実行
+      description: サーバー上でスケジュールされたタスクを手動で実行します。
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: スケジュールされたタスクが正常に実行されました。
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Schedule run executed successfully
