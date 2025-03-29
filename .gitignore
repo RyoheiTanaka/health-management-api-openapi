@@ -1,0 +1,19 @@
+# OS Generated Files
+.DS_Store
+Thumbs.db
+
+# Node.js and npm
+node_modules
+package-lock.json
+yarn.lock
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+temp/
+
+# IDE specific files
+.idea/
+.vscode/
