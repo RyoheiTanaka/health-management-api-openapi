@@ -35,10 +35,13 @@ jobs:
       - name: Bundle OpenAPI spec
         run: redocly build-docs openapi.yaml -o index.html
 
+      - name: List files
+        run: ls -l ./ # index.htmlが生成された場所を確認
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./health-management-api-openapi/index.html
+          path: ./index.html
 
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v2
