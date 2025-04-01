@@ -17,3 +17,5 @@ temp/
 # IDE specific files
 .idea/
 .vscode/
+
+index.html
