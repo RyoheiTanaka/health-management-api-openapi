@@ -159,11 +159,13 @@ components:
             id:
               $ref: '#/components/schemas/AutoIncrementIdProperties/properties/id'
             weight:
-              type: integer
+              type: number
+              format: float
               description: 体重
               example: 70.5
             bmi:
-              type: integer
+              type: number
+              format: float
               description: BMI
               example: 22.38
             date:
@@ -185,7 +187,8 @@ components:
             id:
               $ref: '#/components/schemas/AutoIncrementIdProperties/properties/id'
             fat:
-              type: integer
+              type: number
+              format: float
               description: 体脂肪率
               example: 19.3
             date:
